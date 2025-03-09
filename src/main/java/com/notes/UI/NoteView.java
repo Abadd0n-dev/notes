@@ -6,18 +6,18 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
-import com.notes.server.model.Note;
-import com.notes.noteService.NoteService;
+import com.notes.model.Note;
+import com.notes.service.NoteService;
 
 import java.io.IOException;
 import java.util.List;
 
 public class NoteView extends Application {
-    private final NoteService noteService = new NoteService();
-    private ListView<Note> listView = new ListView<>();
-    private TextField titleField = new TextField();
-    private TextArea contentArea = new TextArea();
-    private Long selectedNoteId = null;
+    public NoteService noteService = new NoteService();
+    public ListView<Note> listView = new ListView<>();
+    public TextField titleField = new TextField();
+    public TextArea contentArea = new TextArea();
+    public Long selectedNoteId = null;
 
     public static void main(String[] args) {
         launch(args);
@@ -53,12 +53,24 @@ public class NoteView extends Application {
 
         loadNotes();
 
+        listView.setCellFactory(param -> new ListCell<Note>() {
+            @Override
+            protected void updateItem(Note note, boolean empty) {
+                super.updateItem(note, empty);
+                if (empty || note == null) {
+                    setText(null);
+                } else {
+                    setText(note.getTitle());
+                }
+            }
+        });
+
         Scene scene = new Scene(gridPane, 600, 300);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    private void loadNotes() {
+    public void loadNotes() {
         try {
             List<Note> notes = noteService.getAllNotes();
             listView.getItems().clear();
@@ -75,35 +87,57 @@ public class NoteView extends Application {
         contentArea.setText(note.getContent());
     }
 
-    private void addNote() {
+    public void addNote() {
+        String title = titleField.getText();
+        String content = contentArea.getText();
+
+        // Проверка на пустые поля
+        if (title.isEmpty() || content.isEmpty()) {
+            showAlert("Название и содержимое не могут быть пустыми.");
+            return;
+        }
+
         Note note = new Note();
-        note.setTitle(titleField.getText());
-        note.setContent(contentArea.getText());
+        note.setTitle(title);
+        note.setContent(content);
 
         try {
             noteService.createNote(note);
             loadNotes();
             clearFields();
+            showAlert("Заметка добавлена успешно!");
         } catch (IOException e) {
             e.printStackTrace();
             showAlert("Не удалось добавить заметку.");
         }
     }
 
-    private void deleteNote() {
+    public void deleteNote() {
         if (selectedNoteId != null) {
-            try {
-                noteService.deleteNote(selectedNoteId);
-                loadNotes();
-                clearFields();
-            } catch (IOException e) {
-                e.printStackTrace();
-                showAlert("Не удалось удалить заметку.");
-            }
+            Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmationAlert.setTitle("Подтверждение удаления");
+            confirmationAlert.setHeaderText(null);
+            confirmationAlert.setContentText("Вы уверены, что хотите удалить эту заметку?");
+
+            confirmationAlert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    try {
+                        noteService.deleteNote(selectedNoteId);
+                        loadNotes();
+                        clearFields();
+                        showAlert("Заметка удалена успешно!");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        showAlert("Не удалось удалить заметку.");
+                    }
+                }
+            });
+        } else {
+            showAlert("Выберите заметку для удаления.");
         }
     }
 
-    private void clearFields() {
+    public void clearFields() {
         titleField.clear();
         contentArea.clear();
         selectedNoteId = null;

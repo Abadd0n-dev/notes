@@ -1,4 +1,4 @@
-package com.notes.server.model;
+package com.notes.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

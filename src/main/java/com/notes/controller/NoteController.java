@@ -1,7 +1,7 @@
-package com.notes.server.controller;
+package com.notes.controller;
 
-import com.notes.server.model.Note;
-import com.notes.server.repository.NoteRepository;
+import com.notes.model.Note;
+import com.notes.repository.NoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
